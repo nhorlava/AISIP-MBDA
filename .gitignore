@@ -127,3 +127,14 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Editor's files
+.idea
+.vscode
+
+# Pytest files
+.pytest_cache/
+
+
+# Notebook jupyter
+.ipynb_checkpoints/

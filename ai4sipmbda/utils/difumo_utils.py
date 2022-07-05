@@ -1,11 +1,12 @@
 # Import Libraries
 from nilearn.datasets import fetch_atlas_difumo
 from nilearn.maskers import NiftiMapsMasker
-from nilearn.image import resample_to_img, index_img
+from nilearn.image import resample_to_img
 import nibabel
 
 import numpy as np
 import os
+
 
 def get_DiFuMo_map(dimension = 1024):
     """
@@ -38,7 +39,7 @@ def get_mask(neurovault, difumo, save=False):
 
     # Resample the image
     print("Resampling. Please wait...")
-    resampled_difumo_maps = resample_to_img(difumo, image)
+    resampled_difumo_maps = resample_to_img(difumo, image, interpolation="nearest")
 
     # Initialize the mask
     masker = NiftiMapsMasker(resampled_difumo_maps)
@@ -53,13 +54,13 @@ def get_mask(neurovault, difumo, save=False):
 
     # Treshold the pixels after summing along the 1024-length dimension
     mask = np.sum(maps_data, axis=-1)
-    mask = mask > np.percentile(mask, 75)
+    mask = mask > 0
 
     # Save if required
     if save:
         difumo_matrices_dir = "./hcp900_difumo_matrices/"
         os.makedirs(difumo_matrices_dir, exist_ok=True)
-        np.save(os.path.join(difumo_matrices_dir, "mask.npz"), mask)
+        np.save(os.path.join(difumo_matrices_dir, "mask"), mask)
 
     return maps_data, mask
 
@@ -81,6 +82,6 @@ def get_projector_from_mask(maps_data, mask, save=False):
     if save:
         difumo_matrices_dir = "./hcp900_difumo_matrices/"
         os.makedirs(difumo_matrices_dir, exist_ok=True)
-        np.save(os.path.join(difumo_matrices_dir, "Z.npz"), Z)
+        np.save(os.path.join(difumo_matrices_dir, "Z"), Z)
 
     return Z

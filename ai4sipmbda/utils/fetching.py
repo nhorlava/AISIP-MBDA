@@ -2,7 +2,8 @@
 import os
 import pickle
 
-from nilearn.datasets import fetch_neurovault, fetch_atlas_difumo
+from nilearn.datasets import fetch_neurovault
+
 
 # ================================
 # === FETCHING FROM NEUROVAULT ===

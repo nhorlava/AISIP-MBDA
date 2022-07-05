@@ -17,3 +17,10 @@ Model-based data augmentation for MRI
 ### Code and Librarier
 * TorchIO: https://torchio.readthedocs.io/
 * Nilearn: https://nilearn.github.io/stable/index.html
+
+
+
+###Installation 
+
+```pip install poetry```
+```poetry install```

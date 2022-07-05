@@ -145,3 +145,7 @@ dmypy.json
 
 #Mac-related
 .DS_Store
+
+# Data
+*.npy
+*.pkl

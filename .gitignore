@@ -141,3 +141,7 @@ dmypy.json
 
 # Notebook jupyter
 .ipynb_checkpoints/
+
+
+#Mac-related
+.DS_Store

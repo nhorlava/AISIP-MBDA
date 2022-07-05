@@ -28,6 +28,8 @@ def fetch_nv(out_folder='../../Data', nv_filepath='../../cache',
     """
 
     # Download and save to disk or load from disk
+    nv_file = os.path.join(nv_filepath, "nv_meta.p")
+
     if download:
 
         print("Download from Neurovault API...")
@@ -37,8 +39,7 @@ def fetch_nv(out_folder='../../Data', nv_filepath='../../cache',
         os.makedirs(nv_filepath, exist_ok=True)
 
         # Get output file name
-        nv_file = os.path.join(nv_filepath, "nv_meta.p")
-        
+
         # Fetch Neurovault (collection_id = 4337)
         neurovault = fetch_neurovault(max_images=max_images,
                                       collection_terms = {},

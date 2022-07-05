@@ -28,7 +28,6 @@ def get_mask(neurovault, difumo, save=False):
     :param difumo: DiFuMo operator. Must be the output of get_DiFuMo_map function.
     :param save: bool. Whether or not saving the resulting mask. Since the output is big,
                        it is suggested to not save it.
-
     Output:
     :param maps_data: the projection of an image. Required to compute the projector Z.
     :param mask: The actual mask.
@@ -72,7 +71,6 @@ def get_projector_from_mask(maps_data, mask, save=False):
     :param mask: The actual mask.
     :param save: bool. Whether or not saving the resulting mask. Since the output is big,
                        it is suggested to not save it.
-
     Output:
     :param Z: The projector operator.
     """
@@ -86,6 +84,3 @@ def get_projector_from_mask(maps_data, mask, save=False):
         np.save(os.path.join(difumo_matrices_dir, "Z.npz"), Z)
 
     return Z
-
-
-    

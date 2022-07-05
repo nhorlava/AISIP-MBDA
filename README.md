@@ -20,7 +20,10 @@ Model-based data augmentation for MRI
 
 
 
-###Installation 
+### Installation 
 
-```pip install poetry```
-```poetry install```
+```
+pip install poetry
+poetry install
+```
+

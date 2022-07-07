@@ -1,5 +1,5 @@
-from miccai2020expe.task import do_classif
-from miccai2020expe.task_loading import load_reduced_hcp
+from task import do_classif
+from task_loading import load_reduced_hcp
 import numpy as np
 from condica.main import condica
 from joblib import load

@@ -5,11 +5,6 @@ Go in the experiments section
 
 `cd experiments`
 
-## Reproduce results on rest
-
-`python resting_state.py`
-
-
 ## Reproduce results on task
 
 `python hcp_task.py`

@@ -1,16 +1,12 @@
-from typing import Any
 from joblib.parallel import Parallel, delayed
 from sklearn.base import BaseEstimator, ClassifierMixin
 import numpy as np
 import pandas as pd
-from sklearn.neural_network import MLPClassifier
-from sklearn.model_selection import GridSearchCV
-from sklearn.linear_model import LogisticRegression
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import ShuffleSplit
 
-from miccai2020expe.task_loading import preprocess_label
+from task_loading import preprocess_label
 
 
 class AugmentedClassifier(BaseEstimator, ClassifierMixin):

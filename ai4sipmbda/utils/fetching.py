@@ -1,6 +1,10 @@
 # Import libraries
 import os
 import pickle
+import json
+
+import numpy as np
+import pandas as pd
 
 from nilearn.datasets import fetch_neurovault
 
@@ -65,3 +69,65 @@ def fetch_nv(out_folder='../../Data', nv_filepath='../../cache',
     print(f"Number of (down)loaded fMRI files: {n_fmri_dl}")
 
     return neurovault
+
+
+def get_dataset_labels(base_path, study="hcp"):
+    """Fetches the relavant metadata from json files contained in base_path and
+    creates labels in format compatible with the training pipeline
+
+    Parameters
+    ----------
+    base_path : str
+        Path to folder where neurovault data was downloaded.
+    study : str, optional
+        by default "hcp"
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame containing the subjects and contrast as used in the training
+        scripts.
+    """
+    Y = list()
+    for fname in os.listdir(base_path):
+        if fname.endswith(".json") and fname.startswith("image_"):
+            with open(os.path.join(base_path, fname), "r") as f:
+                metadata = json.load(f)
+            Y.append({
+                "study": study,
+                "subject": metadata["name"].split("_")[0],
+                "contrast": metadata["contrast_definition"],
+            })
+    return pd.DataFrame(Y)
+
+
+def filter_subjects_with_all_tasks(X, Y, n_tasks=23):
+    """Screens the labels dataframe Y and filters out subjects which do not have
+    data for the minimum desired number of tasks
+
+    Parameters
+    ----------
+    X : numpy.ndarray
+        fMRI data of all subjects projected on DiFuMo2014 and concatenated
+        together.
+    Y : pandas.DataFrame
+        Dataframe of contrast and subjects, as obtained using
+        get_dataset_labels.
+    n_tasks : int, optional
+        Minimum number of tasks per subject, by default 23
+
+    Returns
+    -------
+    numpy.ndarray
+        Masked inputs matrix X.
+    pandas.DataFrame
+        Masked labels dataframe Y.
+    """
+    mask = np.zeros(Y.shape[0]).astype(bool)
+    for subject in Y["subject"].unique():
+        n_tasks_subj = Y[Y["subject"] == subject].shape[0]
+        if n_tasks_subj >= n_tasks:
+            mask = np.logical_or(mask, (Y["subject"] == subject).values)
+
+    mask = pd.Series(mask)
+    return X[mask].reset_index(drop=True), Y[mask].reset_index(drop=True)

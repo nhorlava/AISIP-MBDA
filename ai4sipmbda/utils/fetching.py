@@ -67,9 +67,7 @@ def fetch_nv(out_folder='../../Data', nv_filepath='../../cache',
 
     n_fmri_dl = len(neurovault.images)
     print(f"Number of (down)loaded fMRI files: {n_fmri_dl}")
-
     return neurovault
-
 
 def get_dataset_labels(base_path, study="hcp"):
     """Fetches the relavant metadata from json files contained in base_path and
@@ -88,28 +86,30 @@ def get_dataset_labels(base_path, study="hcp"):
         DataFrame containing the subjects and contrast as used in the training
         scripts.
     """
+
     Y = list()
     for fname in os.listdir(base_path):
         if fname.endswith(".json") and fname.startswith("image_"):
             with open(os.path.join(base_path, fname), "r") as f:
                 metadata = json.load(f)
-            Y.append({
-                "study": study,
-                "subject": metadata["name"].split("_")[0],
-                "contrast": metadata["contrast_definition"],
-            })
+            img_filename= f"image_{metadata['id']}.nii.gz"
+            if os.path.exists(os.path.join(base_path, img_filename)):
+                Y.append({
+                    "study": study,
+                    "subject_id": metadata["name"].split("_")[0],
+                    "contrast": metadata["contrast_definition"],
+                    "meta_path": os.path.join(base_path, fname),
+                    "path": os.path.join(base_path, img_filename),
+                })
     return pd.DataFrame(Y)
 
 
-def filter_subjects_with_all_tasks(X, Y, n_tasks=23):
+def filter_subjects_with_all_tasks(Y, n_tasks=23):
     """Screens the labels dataframe Y and filters out subjects which do not have
     data for the minimum desired number of tasks
 
     Parameters
     ----------
-    X : numpy.ndarray
-        fMRI data of all subjects projected on DiFuMo2014 and concatenated
-        together.
     Y : pandas.DataFrame
         Dataframe of contrast and subjects, as obtained using
         get_dataset_labels.
@@ -118,8 +118,6 @@ def filter_subjects_with_all_tasks(X, Y, n_tasks=23):
 
     Returns
     -------
-    numpy.ndarray
-        Masked inputs matrix X.
     pandas.DataFrame
         Masked labels dataframe Y.
     """
@@ -130,4 +128,4 @@ def filter_subjects_with_all_tasks(X, Y, n_tasks=23):
             mask = np.logical_or(mask, (Y["subject"] == subject).values)
 
     mask = pd.Series(mask)
-    return X[mask].reset_index(drop=True), Y[mask].reset_index(drop=True)
+    return Y[mask].reset_index(drop=True)

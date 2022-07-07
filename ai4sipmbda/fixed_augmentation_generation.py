@@ -18,7 +18,7 @@ def get_row(NeuroDataItem):
 
 def project_difumo(
         df,
-        difumo_matrices_path:str ="../../hcp900_difumo_matrices/",
+        difumo_matrices_path:str ="../../Data/hcp900_difumo_matrices/",
         prior_augmentation: bool = False,
         augmentation_name: List [str] = None,
         num_generated_samples: int = None,
@@ -74,6 +74,6 @@ if __name__=="__main__":
         project_difumo(labels_pd, prior_augmentation=True, num_generated_samples=15, augmentation_name=[augm], save_path="../../Data/HCP_difumo")
 
 
-    
+
 
 

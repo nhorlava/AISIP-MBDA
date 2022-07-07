@@ -30,8 +30,8 @@ class NeuroData(Dataset):
 
         self.difumo_matrices_path =  difumo_matrices_path
 
-        self.mask = np.load(os.path.join(self.difumo_matrices_dir, "mask.npy"))
-        self.pseudo_inv_Z = np.load(os.path.join(self.difumo_matrices_dir, "Zinv.npy"))
+        self.mask = np.load(os.path.join(self.difumo_matrices_path, "mask.npy"))
+        self.pseudo_inv_Z = np.load(os.path.join(self.difumo_matrices_path, "Zinv.npy"))
 
     def __len__(self) -> int:
         return len(self.df)
@@ -43,9 +43,8 @@ class NeuroData(Dataset):
         if self.eval_mode:
             image_tio = self.augmentation_transformations(image_tio)
 
-        difumo_proj = self.pseudo_inv_Z.dot(image_tio.data.squeeze().numpy().get_data()[self.mask])
-        difumo_proj = self.all_transformations(difumo_proj)
-
+        difumo_proj = self.pseudo_inv_Z.dot(image_tio.data.squeeze().numpy()[self.mask])
+        # difumo_proj = self.all_transformations(difumo_proj)
 
         sample = {
             "image":  difumo_proj,
@@ -74,7 +73,8 @@ class NeuroData(Dataset):
         # print(idx, participant,session )
         if self.label is not None:
             target = self.df.loc[idx, self.label]
-            label = self.label_fn(target)
+            label = target
+            # label = self.label_fn(target)
         else:
             label = -1
 
@@ -101,9 +101,13 @@ if __name__=="__main__":
 
     meta_pd = pd.DataFrame.from_dict(neurovault["images_meta"])
 
-    concated_pd= pd.concat([img_pd, meta_pd])
+    concated_pd= pd.merge(img_pd, meta_pd, left_index=True, right_index=True)
 
     augmentation_transforms, all_transforms = get_transforms(data_augmentation= "all")
-    NeuroData_obj = NeuroData(data_df=concated_pd, all_transformations=all_transforms, label = "contrast")
+    NeuroData_obj = NeuroData(data_df=concated_pd, all_transformations=all_transforms, label = "contrast_definition", difumo_matrices_path="../../hcp900_difumo_matrices/", eval_mode=False)
+
+    for ind in range(concated_pd.shape[0]):
+        NeuroData_obj.__getitem__(ind)
+
 
 

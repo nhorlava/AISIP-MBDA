@@ -24,7 +24,7 @@ def get_transforms(
         "RandomNoise":tio.RandomNoise(mean = 0.3, std = 0.5),
         "RandomGamma": tio.RandomGamma(log_gamma=0.075),
         "RandomFlip": tio.RandomFlip(flip_probability=1.0),
-        "None": None,
+        # "None": None,
     }
     if kwargs["data_augmentation"]:
         if kwargs["data_augmentation"] == "all":
@@ -40,6 +40,6 @@ def get_transforms(
     transformations_list = [transforms.ToTensor()]
 
     all_transforms = transforms.Compose(transformations_list)
-    augmentation_transforms = transforms.Compose(tio.transforms.OneOf(augmentation_list))
+    augmentation_transforms = transforms.Compose([tio.transforms.OneOf(augmentation_list)])
 
     return augmentation_transforms, all_transforms

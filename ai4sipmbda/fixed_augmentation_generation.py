@@ -18,7 +18,7 @@ def get_row(NeuroDataItem):
 
 def project_difumo(
         df,
-        difumo_matrices_path:str ="../../Data/hcp900_difumo_matrices/",
+        difumo_matrices_path:str,
         prior_augmentation: bool = False,
         augmentation_name: List [str] = None,
         num_generated_samples: int = None,
@@ -41,7 +41,7 @@ def project_difumo(
     generated_ind= 0
     while generated_ind<num_generated_samples:
         print("Iterating over the dataset until we reach the desired number of samples")
-        for ind, _ in tqdm(filtered_pd.iterrows()):
+        for ind, _ in tqdm(df.iterrows()):
             if generated_ind>=num_generated_samples:
                 break
 
@@ -56,24 +56,44 @@ def project_difumo(
     projected_df.to_csv(os.path.join(save_path,  f"difumo-augm_{augmentation_name_str}.csv"))
 
 
-
-if __name__=="__main__":
-    import os
+def execute_projections(base_dataset_path:str , difumo_maps_path:str, save_path:str, num_samples: int):
 
     labels_pd = get_dataset_labels(
-        base_path="/Users/nastassya.horlava/Documents/Projects/ParisSummerSchool/Code/Data/neurovault/neurovault/collection_4337")
-    filtered_pd = labels_pd
+        base_path=base_dataset_path)
+    # filtered_pd = labels_pd
     # filtered_pd = filter_subjects_with_all_tasks(labels_pd)
 
-    project_difumo(labels_pd, save_path="../../Data/HCP_difumo", num_generated_samples=15)
+    project_difumo(labels_pd, difumo_matrices_path=difumo_maps_path,  save_path=save_path, num_generated_samples=None)
 
     augmentation_list = ["RandomElasticDeformation", "RandomMotion",  "RandomGhosting",
                          "RandomSpike",  "RandomBiasField",   "RandomBlur",  "RandomNoise",  "RandomGamma",   "RandomFlip"]
 
     for augm in augmentation_list:
-        project_difumo(labels_pd, prior_augmentation=True, num_generated_samples=15, augmentation_name=[augm], save_path="../../Data/HCP_difumo")
+        project_difumo(labels_pd, prior_augmentation=True, num_generated_samples=num_samples, augmentation_name=[augm], difumo_matrices_path=difumo_maps_path,  save_path=save_path)
 
 
 
+if __name__=="__main__":
+    import os
+    import argparse
 
+    parser = argparse.ArgumentParser(description='Project images into difumo space')
+    parser.add_argument('--base_dataset_path', type=str,
+                        help='path to your dataset')
+
+    parser.add_argument('--difumo_maps_path', type=str,
+                        help='path to your the stored difumo maps')
+
+    parser.add_argument('--save_path', type=str,
+                        help='path where to store projections')
+
+    parser.add_argument('--num_samples', type=int, default = None,
+                        help='How many samples to generated for augmented samples')
+
+    args = parser.parse_args()
+
+    execute_projections(base_dataset_path = args.base_dataset_path,
+                        difumo_maps_path = args.difumo_maps_path,
+                        save_path = args.save_path,
+                        num_samples = args.num_samples)
 

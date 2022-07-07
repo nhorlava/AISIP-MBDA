@@ -40,8 +40,9 @@ def project_difumo(
 
     generated_ind= 0
     while generated_ind<num_generated_samples:
-        print("Iterating over the dataset until we reach the desired number of samples")
-        for ind, _ in tqdm(df.iterrows()):
+        print(f"Iterating over the dataset until we reach the desired number of samples, {num_generated_samples - generated_ind} samples left")
+        num_samples_from_df = max((num_generated_samples - generated_ind)%df.shape[0], num_generated_samples)
+        for ind, _ in tqdm(df.loc[:num_samples_from_df].iterrows()):
             if generated_ind>=num_generated_samples:
                 break
 
@@ -63,7 +64,7 @@ def execute_projections(base_dataset_path:str , difumo_maps_path:str, save_path:
     # filtered_pd = labels_pd
     # filtered_pd = filter_subjects_with_all_tasks(labels_pd)
 
-    project_difumo(labels_pd, difumo_matrices_path=difumo_maps_path,  save_path=save_path, num_generated_samples=None)
+    project_difumo(labels_pd, difumo_matrices_path=difumo_maps_path,  save_path=save_path, num_generated_samples=num_samples)
 
     augmentation_list = ["RandomElasticDeformation", "RandomMotion",  "RandomGhosting",
                          "RandomSpike",  "RandomBiasField",   "RandomBlur",  "RandomNoise",  "RandomGamma",   "RandomFlip"]

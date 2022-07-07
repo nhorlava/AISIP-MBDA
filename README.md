@@ -28,9 +28,10 @@ poetry install
 ```
 
 
-#
+# DiFuMo extraction with and without augmantations
+
 To run the extraction of DiFuMo vectors without and with augmentations, run 
 
 ```
-python fixed_augmentation_generation.py --base_dataset_path "../../Data/neurovault/neurovault/collection_4337" --difumo_maps_path "../../Data/hcp900_difumo_matrices/" --save_path "../../Data/HCP_difumo" --num_samples 15
+python ai4sipmbda/fixed_augmentation_generation.py --base_dataset_path "../../Data/neurovault/neurovault/collection_4337" --difumo_maps_path "../../Data/hcp900_difumo_matrices/" --save_path "../../Data/HCP_difumo" --num_samples 15
 ```

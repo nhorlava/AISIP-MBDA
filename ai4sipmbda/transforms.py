@@ -3,7 +3,7 @@ import torchvision.transforms as transforms
 import torchio as tio
 def get_transforms(
      **kwargs
-) -> Tuple[transforms.Compose, transforms.Compose]:
+) -> Tuple[transforms.Compose, Any]:
     """
     Outputs the transformations that will be applied to the dataset
 
@@ -40,6 +40,6 @@ def get_transforms(
     transformations_list = [transforms.ToTensor()]
 
     all_transforms = transforms.Compose(transformations_list)
-    augmentation_transforms = transforms.Compose([tio.transforms.OneOf(augmentation_list)])
+    augmentation_transforms = tio.transforms.OneOf(augmentation_list)
 
     return augmentation_transforms, all_transforms

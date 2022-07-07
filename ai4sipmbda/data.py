@@ -8,6 +8,7 @@ import torch
 from torch.utils.data import Dataset
 from ai4sipmbda.utils import fetching, difumo_utils
 import torchio as tio
+import os
 
 class NeuroData(Dataset):
     """Abstract class for all derived CapsDatasets."""
@@ -40,16 +41,16 @@ class NeuroData(Dataset):
         # import nibabel as nib
         participant, image_path, label = self._get_meta_data(idx)
         image_tio = tio.ScalarImage(image_path)
-        if self.eval_mode:
+        if not self.eval_mode and self.augmentation_transformations is not None:
             image_tio = self.augmentation_transformations(image_tio)
 
         difumo_proj = self.pseudo_inv_Z.dot(image_tio.data.squeeze().numpy()[self.mask])
         # difumo_proj = self.all_transformations(difumo_proj)
 
         sample = {
-            "image":  difumo_proj,
+            "difumo_vector":  difumo_proj,
             "label": label,
-            "participant_id": participant,
+            "subject_id": participant,
             "image_path": image_path,
         }
 
@@ -67,7 +68,7 @@ class NeuroData(Dataset):
             label (str or float or int): value of the label to be used in criterion.
         """
 
-        participant = self.df.loc[idx, "id"]
+        participant = self.df.loc[idx, "subject_id"]
         path = self.df.loc[idx, "path"]
 
         # print(idx, participant,session )
@@ -80,34 +81,6 @@ class NeuroData(Dataset):
 
         return participant, path, label
 
-
-
-from ai4sipmbda.transforms import get_transforms
-if __name__=="__main__":
-    import pickle
-    import os
-
-    nv_filepath = "../../cache/"
-    nv_file = os.path.join(nv_filepath, "nv_meta.p")
-
-    # Number of images to fetch
-    max_images = 10
-
-    # Fetching...
-    neurovault = fetching.fetch_nv(max_images=max_images, download=False)
-
-    img_pd = pd.DataFrame.from_dict(neurovault["images"])
-    img_pd = img_pd.rename(columns={0: "path"})
-
-    meta_pd = pd.DataFrame.from_dict(neurovault["images_meta"])
-
-    concated_pd= pd.merge(img_pd, meta_pd, left_index=True, right_index=True)
-
-    augmentation_transforms, all_transforms = get_transforms(data_augmentation= "all")
-    NeuroData_obj = NeuroData(data_df=concated_pd, all_transformations=all_transforms, label = "contrast_definition", difumo_matrices_path="../../hcp900_difumo_matrices/", eval_mode=False)
-
-    for ind in range(concated_pd.shape[0]):
-        NeuroData_obj.__getitem__(ind)
 
 
 

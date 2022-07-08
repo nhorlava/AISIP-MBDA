@@ -28,9 +28,9 @@ pip install poetry
 poetry install
 ```
 
-### Execution pipeline
+## Execution pipeline
 
-#### Data loading and preparation
+### Data loading and preparation
 
 1. To upload the data from neurovelt, run the notebooks/download_hcp.ipynb notebook.
 The script will download 3D temporal statistics of a 4D fMRI data into your provided directory. It will also upload and resample to the size of your 3D data matrixes Z, mask, and Z-inverse that wil be then used to project 3D matrices into DiFuMo space. 
@@ -38,7 +38,7 @@ The script will download 3D temporal statistics of a 4D fMRI data into your prov
 
 2. To then tune augmentation parameters, use notebooks/torchio_data_augmentation_widgets.ipynb notebook. The notebook will provide you a set of widgets that show projected into the glass brain original image and either augmented 3D image or the difference between original and augmented image.
 
-# DiFuMo extraction with and without augmentations
+### DiFuMo extraction with and without augmentations
 
 Once you found a set of augmentation and its parameters that is satisfactory, fix their parameters in ai4sipmbda/transforms.py script.
 

@@ -40,9 +40,10 @@ The script will download 3D temporal statistics of a 4D fMRI data into your prov
 
 # DiFuMo extraction with and without augmentations
 
-Once you found a set of augmentation and its parameters that is satisfactory, fix their 
+Once you found a set of augmentation and its parameters that is satisfactory, fix their parameters in ai4sipmbda/transforms.py script.
 
-We will first store the 
+In this pipeline, we will perform the augmentation for each of the chosen augmentations on 3D activation maps, project them into DiFuMo space and store them prior to the training. 
+
 To run the extraction of DiFuMo vectors without and with augmentations, run 
 
 ```

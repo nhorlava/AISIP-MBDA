@@ -1,7 +1,7 @@
 from typing import List
 
-from tqdm import tqdm
 import numpy as np
+from joblib import Parallel, delayed
 from torchio import transforms
 import torchio as tio
 
@@ -42,7 +42,6 @@ AUGMENTATIONS = {
     "RandomFlip": tio.RandomFlip(
         flip_probability=1.0
     ),
-    "None": None,
 }
 
 
@@ -53,16 +52,14 @@ def create_augmentation(
     return tio.transforms.OneOf(augmentation_list)
 
 
-def transform_based_augmentation(
-    images_paths,
-    augmentation,
-    Z_inv,
-    mask,
-    nb_fakes=10
-):
-    X = list()
-    for image_path in tqdm(images_paths):
+def transform_based_augmentation(augmentation, mask, Z_inv, images_paths, labels, nb_fakes=10, n_jobs=1, verbose=0):
+
+    def _create_fakes(image_path, task):
+        print(f"Starting to augment {image_path}")
+
         image_tio = tio.ScalarImage(image_path)
+
+        sub_X = [Z_inv.dot(image_tio.data.squeeze()[mask])]
 
         for _ in range(nb_fakes):
             # transform
@@ -71,6 +68,13 @@ def transform_based_augmentation(
             # project
             trf_difumo_vec = Z_inv.dot(trf_img_tio.data.squeeze()[mask])
 
-            X.append(trf_difumo_vec)
+            sub_X.append(trf_difumo_vec)
+        print(f"Finished to augment {image_path}")
+        return np.vstack(sub_X), np.vstack([task] * (1 + nb_fakes))
 
-    return np.vstack(X)
+    parallel = Parallel(n_jobs=n_jobs, verbose=verbose)
+    ret = parallel(delayed(_create_fakes)(image_path, task) for image_path, task in zip(images_paths, labels))
+
+    X, Y = zip(*ret)
+
+    return np.vstack(X), np.vstack(Y)

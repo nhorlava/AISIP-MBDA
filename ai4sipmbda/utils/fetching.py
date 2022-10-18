@@ -1,7 +1,4 @@
 # Import libraries
-import os
-import json
-
 import numpy as np
 import pandas as pd
 from sklearn.utils import Bunch
@@ -15,6 +12,7 @@ from nilearn.datasets import fetch_neurovault
 def fetch_nv(
     data_dir: str,
     max_images: int = None,
+    verbose=2,
 ) -> Bunch:
     """
     Loads neurovault into memory, either downloading it from the web-API or
@@ -40,7 +38,7 @@ def fetch_nv(
         image_terms={},
         data_dir=data_dir,
         mode="download_new",
-        verbose=2,
+        verbose=verbose,
         collection_id=4337
     )
 
@@ -48,7 +46,7 @@ def fetch_nv(
 
 
 def get_dataset_labels(
-    data_dir: str,
+    data: Bunch,
     study: str = "hcp"
 ) -> pd.DataFrame:
     """Fetches the relavant metadata from json files contained in base_path and
@@ -56,8 +54,8 @@ def get_dataset_labels(
 
     Parameters
     ----------
-    data_dir : str
-        Path to folder where neurovault data was downloaded.
+    data : sklearn.utils.Bunch
+        
     study : str, optional
         by default "hcp"
 
@@ -69,19 +67,12 @@ def get_dataset_labels(
     """
 
     Y = list()
-    for fname in os.listdir(data_dir):
-        if fname.endswith(".json") and fname.startswith("image_"):
-            with open(os.path.join(data_dir, fname), "r") as f:
-                metadata = json.load(f)
-            img_filename = f"image_{metadata['id']}.nii.gz"
-            if os.path.exists(os.path.join(data_dir, img_filename)):
-                Y.append({
-                    "study": study,
-                    "subject_id": metadata["name"].split("_")[0],
-                    "contrast": metadata["contrast_definition"],
-                    "meta_path": os.path.join(data_dir, fname),
-                    "path": os.path.join(data_dir, img_filename),
-                })
+    for metadata in data["images_meta"]:
+        Y.append({
+            "study": study,
+            "subject": metadata["name"].split("_")[0],
+            "contrast": metadata["contrast_definition"],
+        })
     return pd.DataFrame(Y)
 
 

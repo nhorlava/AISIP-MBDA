@@ -74,13 +74,13 @@ def get_dataset_labels(
             with open(os.path.join(data_dir, fname), "r") as f:
                 metadata = json.load(f)
             img_filename = f"image_{metadata['id']}.nii.gz"
-            if os.path.exists(os.path.join(base_path, img_filename)):
+            if os.path.exists(os.path.join(data_dir, img_filename)):
                 Y.append({
                     "study": study,
                     "subject_id": metadata["name"].split("_")[0],
                     "contrast": metadata["contrast_definition"],
-                    "meta_path": os.path.join(base_path, fname),
-                    "path": os.path.join(base_path, img_filename),
+                    "meta_path": os.path.join(data_dir, fname),
+                    "path": os.path.join(data_dir, img_filename),
                 })
     return pd.DataFrame(Y)
 

@@ -1,6 +1,8 @@
+import pickle
+from pathlib import Path
+from logging import warning
 import numpy as np
 import pandas as pd
-from joblib.parallel import Parallel, delayed
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.ensemble import RandomForestClassifier
@@ -75,8 +77,8 @@ class AugmentedClassifier(BaseEstimator, ClassifierMixin):
 
 
 def do_classif(
-    images_path, Z_inv, mask, labels, f, method_name, filename, train_size,
-    n_splits=5, n_jobs=5
+    images_path, Z_inv, mask, labels, f, method_name, output_fname, models_dir,
+    train_size, n_splits=5, n_jobs=5
 ):
     """
     Tries 4 different classifier with the given augmentation method
@@ -142,18 +144,20 @@ def do_classif(
     #     )
     # )
 
-    def do_split(split, X, Y, f, model, subjects, n_jobs):
+    def do_split(split, X, Y, f, model, subjects, n_jobs, checkpoint_base_name, i_split):
+        checkpoint_name = f"{checkpoint_base_name}_{i_split}.pkl"
         train, test = split
         train, test = subjects[train], subjects[test]
         train = Y["subject"].isin(train)
         test = Y["subject"].isin(test)
         print(" >> preprocessing labels")
         Y_train, labels_dict = preprocess_label(Y[train], return_dict=True)
-        # XXX: FIX ME
-        # Y_test = preprocess_label(Y[test], use_dict=labels_dict)
-        Y_test = preprocess_label(Y[test])
+        try:
+            Y_test = preprocess_label(Y[test], use_dict=labels_dict)
+        except KeyError:
+            warning("NOT PASSING TRAIN LABELS DICTIONARY TO TEST SET")
+            Y_test = preprocess_label(Y[test])
         X_train = np.array(X)[train.values]
-        # X_test = np.array(X)[test.values]
         print(" >> creating test images")
         img_tio_test = [tio.ScalarImage(path) for path in np.array(X)[test.values]]
         print(" >> projecting test images onto DiFuMo")
@@ -161,28 +165,39 @@ def do_classif(
         clf = AugmentedClassifier(model, f)
         print(" >> starting fit")
         clf.fit(X_train, Y_train)
+        with open(checkpoint_name, "wb") as file:
+            pickle.dump(clf, file)
         print(" >> starting score")
         score_split = clf.score(X_test, Y_test)
         return score_split
 
     scores = []
+    models_dir = Path(models_dir)
+    models_dir.mkdir(exist_ok=True)
     for model, name in models:
         subjects = labels["subject"].unique()
         sf = ShuffleSplit(
             n_splits=n_splits, train_size=train_size, random_state=0
         )
+        model_fname = models_dir / name
         scores_split = [
-            do_split(split, images_path, labels, f, model, subjects, n_jobs)
-            for split in sf.split(range(len(subjects)))
+            do_split(
+                split=split,
+                X=images_path,
+                Y=labels,
+                f=f,
+                model=model,
+                subjects=subjects,
+                n_jobs=n_jobs,
+                checkpoint_base_name=model_fname,
+                i_split=i_split,
+            )
+            for i_split, split in enumerate(sf.split(range(len(subjects))))
         ]
-        # scores_split = Parallel(verbose=100, n_jobs=n_jobs)(
-        #     delayed(do_split)(split, images_path, labels, f, model, subjects)
-        #     for split in sf.split(range(len(subjects)))
-        # )
         for i_split, score_split in enumerate(scores_split):
             scores.append((method_name, name, score_split, i_split))
 
     scores = pd.DataFrame(
         scores, columns=["method_name", "algo", "score", "split"]
     )
-    scores.to_csv(filename)
+    scores.to_csv(output_fname)

@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 
 import numpy as np
 
@@ -67,8 +68,8 @@ if __name__ == "__main__":
 
     # TODO: Should be replaced by function loading or creating matrices
     print(" --- LOADING/CREATING DIFUMO PROJECTORS --- ")
-    Z_inv = np.load("hcp900_difumo_matrices/Zinv.npy")
-    mask = np.load("hcp900_difumo_matrices/mask.npy")
+    Z_inv = np.load("../hcp900_difumo_matrices/Zinv.npy")
+    mask = np.load("../hcp900_difumo_matrices/mask.npy")
 
     all_augs = create_augmentation(list(AUGMENTATIONS.keys()))
 
@@ -80,6 +81,9 @@ if __name__ == "__main__":
         )
 
     print(" --- STARTING CLASSIFICATION --- ")
+    output_path = Path(args.output_path)
+    output_path.parent.mkdir(exist_ok=True)
+
     do_classif(
         data["images"],
         Z_inv,
@@ -87,7 +91,7 @@ if __name__ == "__main__":
         labels,
         augmenter,
         method_name="all_augs",
-        filename=args.output_path,
+        filename=output_path,
         train_size=args.train_size,
         n_splits=args.nsplits,
         n_jobs=1,

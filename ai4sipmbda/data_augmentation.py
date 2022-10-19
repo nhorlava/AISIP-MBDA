@@ -4,6 +4,7 @@ import numpy as np
 from joblib import Parallel, delayed
 from torchio import transforms
 import torchio as tio
+from ai4sipmbda.utils.random import set_all_seeds
 
 
 AUGMENTATIONS = {
@@ -53,8 +54,11 @@ def create_augmentation(
 
 
 def transform_based_augmentation(augmentation, mask, Z_inv, images_paths, labels, nb_fakes=10, n_jobs=1, verbose=0):
+    set_all_seeds(1234)
+    seeds = np.random.randint(1e8, size=nb_fakes)
 
-    def _create_fakes(image_path, task):
+    def _create_fakes(image_path, task, seed):
+        set_all_seeds(seed)
         print(f"Starting to augment {image_path}")
 
         image_tio = tio.ScalarImage(image_path)
@@ -73,7 +77,7 @@ def transform_based_augmentation(augmentation, mask, Z_inv, images_paths, labels
         return np.vstack(sub_X), np.vstack([task] * (1 + nb_fakes))
 
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose)
-    ret = parallel(delayed(_create_fakes)(image_path, task) for image_path, task in zip(images_paths, labels))
+    ret = parallel(delayed(_create_fakes)(image_path, task, seed) for image_path, task, seed in zip(images_paths, labels, seeds))
 
     X, Y = zip(*ret)
 

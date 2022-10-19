@@ -1,3 +1,5 @@
+import os
+
 # Import Libraries
 from nilearn.datasets import fetch_atlas_difumo
 from nilearn.maskers import NiftiMapsMasker
@@ -5,10 +7,10 @@ from nilearn.image import resample_to_img
 import nibabel
 
 import numpy as np
-import os
+from joblib import Parallel, delayed
 
 
-def get_DiFuMo_map(dimension = 1024):
+def get_DiFuMo_map(dimension=1024):
     """
     Get the map for DiFuMo projection (unsampled).
     :param dimension: int
@@ -85,3 +87,15 @@ def get_projector_from_mask(maps_data, mask, save=False):
         np.save(os.path.join(difumo_matrices_dir, "Z"), Z)
 
     return Z
+
+
+def _project_one(img, Z_inv, mask):
+    return Z_inv.dot(img.data.squeeze()[mask])
+
+
+def project_to_difumo(img_tio, Z_inv, mask, n_jobs=1):
+    parallel = Parallel(n_jobs=n_jobs)
+    projected_imgs = parallel(
+        delayed(_project_one)(img, Z_inv, mask) for img in img_tio
+    )
+    return np.vstack(projected_imgs)

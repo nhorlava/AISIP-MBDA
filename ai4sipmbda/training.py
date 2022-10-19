@@ -8,6 +8,8 @@ from sklearn.model_selection import ShuffleSplit
 
 import torchio as tio
 
+from utils.difumo_utils import project_to_difumo
+
 
 def preprocess_label(Y_t, use_dict=None, return_dict=False):
     """
@@ -29,10 +31,12 @@ def preprocess_label(Y_t, use_dict=None, return_dict=False):
         dictionary label -> class number (only returned if return_dict is True)
     """
     if use_dict is None:
+        print("     >>> creating Y_dict")
         Y_dict = {v: k for k, v in enumerate(Y_t["contrast"].unique())}
     else:
         Y_dict = use_dict
 
+    print("     >>> Applying Y_dict")
     if return_dict:
         return Y_t["contrast"].apply(lambda x: Y_dict[x]).values, Y_dict
     else:
@@ -138,21 +142,26 @@ def do_classif(
     #     )
     # )
 
-    def do_split(split, X, Y, f, model, subjects):
+    def do_split(split, X, Y, f, model, subjects, n_jobs):
         train, test = split
         train, test = subjects[train], subjects[test]
         train = Y["subject"].isin(train)
         test = Y["subject"].isin(test)
+        print(" >> preprocessing labels")
         Y_train, labels_dict = preprocess_label(Y[train], return_dict=True)
         # XXX: FIX ME
         # Y_test = preprocess_label(Y[test], use_dict=labels_dict)
         Y_test = preprocess_label(Y[test])
         X_train = np.array(X)[train.values]
         # X_test = np.array(X)[test.values]
+        print(" >> creating test images")
         img_tio_test = [tio.ScalarImage(path) for path in np.array(X)[test.values]]
-        X_test = np.vstack([Z_inv.dot(img.data.squeeze()[mask]) for img in img_tio_test])
+        print(" >> projecting test images onto DiFuMo")
+        X_test = project_to_difumo(img_tio_test, Z_inv, mask, n_jobs=n_jobs)
         clf = AugmentedClassifier(model, f)
+        print(" >> starting fit")
         clf.fit(X_train, Y_train)
+        print(" >> starting score")
         score_split = clf.score(X_test, Y_test)
         return score_split
 
@@ -162,10 +171,14 @@ def do_classif(
         sf = ShuffleSplit(
             n_splits=n_splits, train_size=train_size, random_state=0
         )
-        scores_split = Parallel(verbose=100, n_jobs=n_jobs)(
-            delayed(do_split)(split, images_path, labels, f, model, subjects)
+        scores_split = [
+            do_split(split, images_path, labels, f, model, subjects, n_jobs)
             for split in sf.split(range(len(subjects)))
-        )
+        ]
+        # scores_split = Parallel(verbose=100, n_jobs=n_jobs)(
+        #     delayed(do_split)(split, images_path, labels, f, model, subjects)
+        #     for split in sf.split(range(len(subjects)))
+        # )
         for i_split, score_split in enumerate(scores_split):
             scores.append((method_name, name, score_split, i_split))
 

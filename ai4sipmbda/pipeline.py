@@ -94,5 +94,5 @@ if __name__ == "__main__":
         filename=output_path,
         train_size=args.train_size,
         n_splits=args.nsplits,
-        n_jobs=1,
+        n_jobs=args.njobs,
     )
